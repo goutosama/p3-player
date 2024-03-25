@@ -72,31 +72,36 @@ const uint8_t winY = 10;
 const uint8_t winWidth = 96;
 const uint8_t winHeight = 11;
 
-void drawCenterOption(char *text)
-{
-    // center option
-    display.setTextColor(WHITE);
-    display.fillRect(winX, winY, winWidth, winHeight, BLACK);
-    display.setCursor(winX + 2, winY + 2);
-    display.print(text);
+void drawCenterOption(char * text, int16_t offset[2], bool isFullOffset) {
+  // center option
+  int8_t offX = winX; 
+  int8_t offY = winY;
+  display.setTextColor(WHITE);
+  if (isFullOffset) {
+    offX += offset[0];
+    offY += offset[1];
+  }
+  display.fillRect(offX, offY, winWidth, winHeight, BLACK);
+  display.setCursor(winX + 2 + offset[0], winY + 2 + offset[1]);
+  display.print(text);
 }
 
-void drawUpperOption(char *text)
-{
-    display.setTextColor(BLACK);
-    display.setCursor(winX, winY - 8);
-    display.print((char)0x1E);
-    display.print(" ");
-    display.print(text);
+void drawUpperOption(char * text, int16_t offset[2]) {
+  display.setTextColor(BLACK);
+  display.setCursor(winX, winY - 8);
+  display.print((char)0x1E);
+  display.print(" ");
+  display.setCursor(winX + offset[0] + 2 * 6, winY - 8 + offset[1]);
+  display.print(text);
 }
 
-void drawLowerOption(char *text)
-{
-    display.setTextColor(BLACK);
-    display.setCursor(winX, winY + 12);
-    display.print((char)0x1F);
-    display.print(" ");
-    display.print(text);
+void drawLowerOption(char * text, int16_t offset[2]) {
+  display.setTextColor(BLACK);
+  display.setCursor(winX, winY + 12);
+  display.print((char)0x1F);
+  display.print(" ");
+  display.setCursor(winX + offset[0] + 2 * 6, winY + 12 + offset[1]);
+  display.print(text);
 }
 
 void drawMenuCorner(char *text)
@@ -223,24 +228,121 @@ void drawMediaBar(int16_t offset[2], struct MusicState *stat)
 
 // Animation internal functions
 
-// Render function for Menu Corner sliding across the screen on menu open @note WARNING: Can cause unstable crashes of whole display. Still investigated.
-void renderAnim_MenuCornerSlide(struct AnimSeq *self)
-{
-    uint8_t travel = 112; // in pixels
+// Render function for Menu Corner sliding across the screen on menu open @note WARNING: Unstable. Can cause crashes of whole display. That was when I did full refresh, but now circles still might be too much for arduino to handle (looks cooler and P3 like though)
+void renderAnim_MenuCornerSlide(struct AnimSeq *self) {
+  uint8_t travel = 152; //in pixels
 
-    if (self->step > self->duration)
-    {
-        display.fillScreen(WHITE);
-        drawMenuCorner("MENU");
-        PopAnim();
-        return;
-    }
+  if (self->step > self->duration) {
+    //Serial.println("menu");
+    self->offset[1] = 0;
+    drawMenuCorner("MENU");
+    drawUpperOption("First", self->offset);
+    drawCenterOption("Second", self->offset, false);
+    drawLowerOption("Third", self->offset);
+    PopAnim();
+    return;
+  }
 
-    self->offset[1] = map(self->step, 0, self->duration, 0, travel);
-    display.fillScreen(WHITE);
-    display.fillRect(0, 0, 128 - self->offset[1], 32, BLACK);
-    self->step++;
+  self->offset[1] = map(self->step, 0, self->duration, 12, travel);
+  display.fillRect(0, 0, 128, 32, WHITE);
+  if (self->offset[1] <= 112) {
+    display.drawCircle(112, 0, self->offset[1] + 1, BLACK);
+    display.drawCircle(112, 0, self->offset[1], BLACK);
+  }
+  if (self->step > self->duration / 4) {
+    display.drawCircle(32, 0, self->offset[1] - 50, BLACK);
+  }
+  self->step++;
 }
+
+// Render function for swiping down menu options
+void renderAnim_SwipeDownMenu(struct AnimSeq *self) {
+  uint8_t travel = 11; //in pixels
+  uint8_t travelX = 12;
+
+  if (self->step > self->duration) {
+    PopAnim();
+    return;
+  }
+  
+  display.fillRect(20, 0, 64, 32,  WHITE); // fix drawing where not needed
+
+
+  if (self->step < self->duration / 2) {
+    self->offset[0] = map(self->step, 0, self->duration/2, 0, travelX);
+    self->offset[1] = map(self->step, 0, self->duration/2, 0, travel);
+    drawUpperOption("First", self->offset);
+    drawCenterOption("Second", self->offset, false);
+    drawLowerOption("Third", self->offset);
+  }
+  /*
+  if (self->step = self->duration / 2){
+    // change func
+  }
+  */
+  if (self->step > self->duration / 2 - 2) {
+    self->offset[0] = -map(self->step, self->duration/2, self->duration, travelX, 0);
+    self->offset[1] = -map(self->step, self->duration/2, self->duration, travel, 0);
+    drawUpperOption("Third", self->offset);
+    drawCenterOption("First", self->offset, false);
+    drawLowerOption("Second", self->offset);
+  }
+
+  display.fillRect(14,10, 2, 11, WHITE); // fix drawing where not needed
+  
+  self->step++;
+}
+
+// Render function for swiping up menu options
+void renderAnim_SwipeUpMenu(struct AnimSeq *self) {
+  uint8_t travel = 11; //in pixels
+  uint8_t travelX = 12;
+
+  if (self->step > self->duration) {
+    PopAnim();
+    return;
+  }
+  
+  display.fillRect(20, 0, 64, 32,  WHITE); // fix drawing where not needed
+
+  if (self->step < self->duration / 2) {
+    self->offset[0] = -map(self->step, 0, self->duration/2, 0, travelX);
+    self->offset[1] = -map(self->step, 0, self->duration/2, 0, travel);
+    drawUpperOption("First", self->offset);
+    drawCenterOption("Second", self->offset, false);
+    drawLowerOption("Third", self->offset);
+  }
+  /*
+  if (self->step = self->duration / 2){
+    // change func
+  }
+  */
+  if (self->step > self->duration / 2 - 2) {
+    self->offset[0] = map(self->step, self->duration/2, self->duration, travelX, 0);
+    self->offset[1] = map(self->step, self->duration/2, self->duration, travel, 0);
+    drawUpperOption("Third", self->offset);
+    drawCenterOption("Second", self->offset, false);
+    drawLowerOption("First", self->offset);
+  }
+  display.fillRect(14,10, 2, 11, WHITE); //fix drawing where not needed
+  display.fillRect(16, 0, 16, 2, WHITE);
+  self->step++;
+}
+
+/*
+void renderAnim_OpenMenuOption(struct AnimSeq *self) {
+  uint8_t travel = 32; //in pixels
+
+  if (self->step > self->duration) {
+    PopAnim();
+    return;
+  }
+
+  self->offset[1] = map(self->step, 0, self->duration, 0, travel);
+
+
+  self->step++;
+}*/
 
 // Render function for swiping out the current song
 void renderAnim_SwipeOutSong(struct AnimSeq *self)
@@ -277,22 +379,59 @@ void renderAnim_SwipeInSong(struct AnimSeq *self)
 
 // animation methods
 
-// Function that initiates the animation for Menu Corner sliding across the screen on menu open
-void Anim_MenuCornerSlide()
-{
-    uint8_t multiplier = 60 / FPS;
-    uint8_t duration = 9; // duration in frames
-    uint8_t i = getFirstEmptyAnim();
-    if (i < 4)
-    {
-        AnimQueue[i]->renderFunc = &renderAnim_MenuCornerSlide;
-        AnimQueue[i]->step = 0;
-        AnimQueue[i]->duration = duration / multiplier;
-        AnimQueue[i]->offset[0] = 0;
-        AnimQueue[i]->offset[1] = 0;
-    }
+/* Only started
+void Anim_OpenMenuOption() {
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 10;
+  uint8_t i = getFirstEmptyAnim();
+  if (i < 4) {
+    AnimQueue[i]->renderFunc = &renderAnim_OpenMenuOption;
+    AnimQueue[i]->step = 0;
+    AnimQueue[i]->duration = duration / multiplier;
+    AnimQueue[i]->offset[0] = 0;
+    AnimQueue[i]->offset[1] = 0;
+  }
+}*/
+
+void Anim_SwipeUpMenu() {
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 10;
+  uint8_t i = getFirstEmptyAnim();
+  if (i < 4) {
+    AnimQueue[i]->renderFunc = &renderAnim_SwipeUpMenu;
+    AnimQueue[i]->step = 0;
+    AnimQueue[i]->duration = duration / multiplier;
+    AnimQueue[i]->offset[0] = 0;
+    AnimQueue[i]->offset[1] = 0;
+  }
 }
 
+void Anim_SwipeDownMenu() {
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 10;
+  uint8_t i = getFirstEmptyAnim();
+  if (i < 4) {
+    AnimQueue[i]->renderFunc = &renderAnim_SwipeDownMenu;
+    AnimQueue[i]->step = 0;
+    AnimQueue[i]->duration = duration / multiplier;
+    AnimQueue[i]->offset[0] = 0;
+    AnimQueue[i]->offset[1] = 0;
+  }
+}
+
+// Function that initiates the animation for Menu Corner sliding across the screen on menu open
+void Anim_MenuCornerSlide() {
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 16;
+  uint8_t i = getFirstEmptyAnim();
+  if (i < 4) {
+    AnimQueue[i]->renderFunc = &renderAnim_MenuCornerSlide;
+    AnimQueue[i]->step = 0;
+    AnimQueue[i]->duration = duration / multiplier;
+    AnimQueue[i]->offset[0] = 0;
+    AnimQueue[i]->offset[1] = 0;
+  }
+}
 
 // Function that initiates the animation for swiping out the current song
 void Anim_SwipeOutSong()
