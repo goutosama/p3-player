@@ -54,12 +54,6 @@ void setup() {
   display.setTextColor(BLACK); 
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
-  // Menu testing snippet
-  drawMenuCorner("MAIN");
-  drawUpperOption("second");
-  drawCenterOption("center");
-  drawLowerOption("lower");
-
   // Scrolling test
   //display.startscrolldiagright(0x0F, 0x0F);
   //display.startscrollright(0x00, 0x64);
