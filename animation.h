@@ -12,7 +12,6 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 int16_t globalOffset[2] = {0, 0};
 struct AnimSeq *AnimQueue[4];
-struct MusicState *stat;
 
 /*!
     @brief  Function that returns 0 when there's no animations in the queue and 1 elsewhere

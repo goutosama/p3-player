@@ -1,6 +1,7 @@
 // библиотека для эмуляции Serial порта
 #include <DFMiniMp3.h>
 #include <SoftwareSerial.h>
+#include "structs.h"
 // Declaration for SoftwareSerial (for communication with player) and DFPLayerMini chip
 SoftwareSerial SoftSerial(10, 11);
 
@@ -13,9 +14,10 @@ SoftwareSerial SoftSerial(10, 11);
   int buttonVolumeDown = 6; // кнопка уменьшение громкости
   boolean isPlaying = false; // статус воспроизведения/пауза
 */
+
 // forward declare the notify class, just the name
 //
-class Mp3Notify; 
+class Mp3Callbacks; 
 
 // define a handy type using serial and our notify class
 //
@@ -79,3 +81,24 @@ public:
   }
 };
 
+void chooseFolder(uint8_t number) {
+  stat->folder = number;
+};
+
+void switchModes(){
+
+}
+
+void nextTrack(){
+  stat->track = dfmp3.getCurrentTrack();
+  dfmp3.nextTrack();
+};
+
+void prevTrack(){
+  stat->track = dfmp3.getCurrentTrack();
+  dfmp3.prevTrack();
+};
+
+void playTrack(){
+  dfmp3.playFolderTrack16(stat->folder, stat->track);
+}
