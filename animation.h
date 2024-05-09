@@ -72,6 +72,7 @@ const uint8_t winY = 10;
 const uint8_t winWidth = 96;
 const uint8_t winHeight = 11;
 
+// WHY tf we need this bool var what does it change
 void drawCenterOption(char * text, int16_t offset[2], bool isFullOffset) {
   // center option
   int8_t offX = winX; 
