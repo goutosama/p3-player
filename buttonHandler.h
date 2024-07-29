@@ -9,15 +9,17 @@ Button play(4); // Play Button
 Button mode(4); // Switch play mode Button
 Button disp(4); // Display Button
 
-enum operationMode
+typedef enum Buttons
 {
+    VOLUP,
+    VOLDN,
+    PREV,
+    NEXT,
     PLAY,
-    SLEEP,
-    HOME,
-    MENU
-};
-
-operationMode currMode = PLAY;
+    MODE,
+    DISP,
+   // RESERVED
+} Buttons;
 
 void initButtons()
 {
