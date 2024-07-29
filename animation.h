@@ -62,6 +62,28 @@ void PopAnim()
     }
 }
 
+void initAnimations(){
+  // Creates Animation Queue. Length is defined in defines.h
+  for (uint8_t i = 0; i < ANIM_QUEUE_LENGTH; i++) {
+    AnimQueue[i] = (struct AnimSeq*)malloc(sizeof(struct AnimSeq));
+    AnimQueue[i]->renderFunc = NULL;
+  }
+
+  // Default Adafruit code to check connection with display
+  // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed")); //                            What if there's no Serial?
+    for (;;); // Don't proceed, loop forever
+  }
+
+  // Clear the buffer
+  display.clearDisplay();
+  display.fillRect(0, 0, 128, 32, WHITE); // Draw white rectangle 128x32
+  display.setTextColor(BLACK); // Default color for text
+  display.cp437(true);         // Use full 256 char 'Code Page 437' font
+
+  display.display(); // Wake up, boy
+}
 // draw methods, todo: redrawing if already drawn smth
 
 // options
