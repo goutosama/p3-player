@@ -1,13 +1,13 @@
 #include <Button.h>
 
-Button volUp(4); // Volume Up button
-Button volDn(4); // Volume Down button
-Button prev(4);  // Previous track button
-Button next(4);  // Next track button
+Button volUp(4); // Volume Up Button
+Button volDn(4); // Volume Down Button
+Button prev(4);  // Previous track Button
+Button next(4);  // Next track Button
 
-Button play(4); // Play button
-Button mode(4); // Switch play mode button
-Button disp(4); // Display button
+Button play(4); // Play Button
+Button mode(4); // Switch play mode Button
+Button disp(4); // Display Button
 
 enum operationMode
 {
@@ -29,137 +29,79 @@ void initButtons()
     mode.begin();
     disp.begin();
 }
-
-void handleButtons()
+struct ButtonState
 {
-    switch (currMode)
+    byte ButtonJustPressedState = 0b00000000;
+    byte ButtonPressedState = 0b00000000;
+} state;
+
+struct ButtonState handleButton()
+{
+    getButtonJustPressedState();
+    getButtonPressed();
+    return state;
+}
+
+void getButtonJustPressedState()
+{
+    if (volUp.pressed())
     {
-    case PLAY:
-        // Volume
-        if (volUp.pressed())
-        {
-            volumeChange(1);
-        }
-        else if (volDn.pressed())
-        {
-            volumeChange(-1);
-        }
-        // Tracks
-        if (prev.pressed())
-        {
-            trackSwipe(-1);
-        }
-        else if (next.pressed())
-        {
-            trackSwipe(1);
-        }
-        // Action buttons
-        if (play.pressed()){
-            pauseFunc();
-        }
-        if (mode.pressed()){
-            switchPlayMode();
-        }
-        if (disp.pressed())
-        {
-            currMode = HOME;
-        }
-        // Actually handling long press
-        // Should switch to Sleep mode
-        break;
+        state.ButtonJustPressedState += 0b10000000;
+    }
+    if (volDn.pressed())
+    {
+        state.ButtonJustPressedState += 0b01000000;
+    }
+    if (prev.pressed())
+    {
+        state.ButtonJustPressedState += 0b00100000;
+    }
+    if (next.pressed())
+    {
+        state.ButtonJustPressedState += 0b00010000;
+    }
+    if (play.pressed())
+    {
+        state.ButtonJustPressedState += 0b00001000;
+    }
+    if (mode.pressed())
+    {
+        state.ButtonJustPressedState += 0b00000100;
+    }
+    if (disp.pressed())
+    {
+        state.ButtonJustPressedState += 0b00000010;
+    }
+}
 
-    case SLEEP:
-        // Volume
-        if (volUp.pressed())
-        {
-            volumeChange(1);
-        }
-        else if (volDn.pressed())
-        {
-            volumeChange(-1);
-        }
-        // Tracks
-        if (prev.pressed())
-        {
-            trackSwipe(-1);
-        }
-        else if (next.pressed())
-        {
-            trackSwipe(1);
-        }
-        // Action buttons
-        if (play.pressed()){
-            pauseFunc();
-        }
-        if (mode.pressed()){
-            switchPlayMode();
-        }
-        // Actually handling long press
-        // Should switch to Play mode
-        break;
-    
-    case HOME:
-        // Volume
-        if (volUp.pressed())
-        {
-            volumeChange(1);
-        }
-        else if (volDn.pressed())
-        {
-            volumeChange(-1);
-        }
-        // Changing options
-        if (prev.pressed())
-        {
-            optionChange(-1);
-        }
-        else if (next.pressed())
-        {
-            optionChange(1);
-        }
-        // Action buttons
-        if (play.pressed()){
-            selectOption();
-        }
-        if (mode.pressed()){
-            currMode = PLAY;
-        }
-        if (disp.pressed())
-        {
-            currMode = PLAY;
-        }
-        break;
-
-    case MENU:
-        // Volume
-        if (volUp.pressed())
-        {
-            volumeChange(1);
-        }
-        else if (volDn.pressed())
-        {
-            volumeChange(-1);
-        }
-        // Changing options
-        if (prev.pressed())
-        {
-            optionChange(-1);
-        }
-        else if (next.pressed())
-        {
-            optionChange(1);
-        }
-        // Action buttons
-        if (play.pressed()){
-            selectOption();
-        }
-        if (mode.pressed()){
-            prevMenu();
-        }
-        if (disp.pressed())
-        {
-            currMode = HOME;
-        }
-        break;
+void getButtonPressed()
+{
+    if (volUp.PRESSED)
+    {
+        state.ButtonPressedState += 0b10000000;
+    }
+    if (volDn.PRESSED)
+    {
+        state.ButtonPressedState += 0b01000000;
+    }
+    if (prev.PRESSED)
+    {
+        state.ButtonPressedState += 0b00100000;
+    }
+    if (next.PRESSED)
+    {
+        state.ButtonPressedState += 0b00010000;
+    }
+    if (play.PRESSED)
+    {
+        state.ButtonPressedState += 0b00001000;
+    }
+    if (mode.PRESSED)
+    {
+        state.ButtonPressedState += 0b00000100;
+    }
+    if (disp.PRESSED)
+    {
+        state.ButtonPressedState += 0b00000010;
     }
 }
