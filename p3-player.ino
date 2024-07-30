@@ -17,6 +17,7 @@ void setup() {
   stat->battery = 4;
   stat->timer = 127; // test
 
+  int16_t defaultOffset[2] = {0};
   // Default Adafruit code to check connection with display
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
@@ -30,6 +31,12 @@ void setup() {
   display.setTextColor(BLACK); 
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 
+  // Menu testing snippet
+  drawMenuCorner("MAIN");
+  drawUpperOption("second", defaultOffset);
+  drawCenterOption("center", defaultOffset, true);
+  drawLowerOption("lower", defaultOffset);
+  
   // Scrolling test
   //display.startscrolldiagright(0x0F, 0x0F);
   //display.startscrollright(0x00, 0x64);
