@@ -1,33 +1,9 @@
 #include <SPI.h>
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-
-// библиотека для эмуляции Serial порта
-#include <DFMiniMp3.h>
-#include <SoftwareSerial.h>
-// создаём объект mySoftwareSerial и передаём номера управляющих пинов RX и TX
-// RX - цифровой вывод 10, необходимо соединить с выводом TX дисплея
-// TX - цифровой вывод 11, необходимо соединить с выводом RX дисплея
 
 #include "animation.h"
 #include "defines.h"
 #include "structs.h"
-
-// Init values
-/*
-  int buttonNext = 2;   // кнопка следующий трек
-  int buttonPause = 3;  // кнопка пауза/ пуск
-  int buttonPrevious = 4; // кнопка предыдущий трек
-  int buttonVolumeUp = 5; // кнопка увеличение громкости
-  int buttonVolumeDown = 6; // кнопка уменьшение громкости
-  boolean isPlaying = false; // статус воспроизведения/пауза
-*/
-
-// Declaration for SoftwareSerial (for communication with player) and DFPLayerMini chip
-//SoftwareSerial mySoftwareSerial(10, 11); // RX, TX для плеера DFPlayer Mini
-//DFRobotDFPlayerMini myDFPlayer;
-
 
 void setup() {
   Serial.begin(9600); //debug Serial with PC
@@ -60,7 +36,7 @@ void setup() {
   drawUpperOption("second", defaultOffset);
   drawCenterOption("center", defaultOffset, true);
   drawLowerOption("lower", defaultOffset);
-
+  
   // Scrolling test
   //display.startscrolldiagright(0x0F, 0x0F);
   //display.startscrollright(0x00, 0x64);
