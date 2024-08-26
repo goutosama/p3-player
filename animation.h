@@ -91,6 +91,31 @@ void initAnimations()
 }
 // draw methods, todo: redrawing if already drawn smth
 
+// Hello! animation at the start
+void drawWord(int16_t offset[2], uint8_t step)
+{
+  // steps are 2 * word length
+  const char word[] = "HELLO!";
+  const int8_t separation = 4;
+  const uint8_t charWidth = 4;
+  /*
+  for (uint8_t i = 0; i < 2 * strlen(word); i++)
+
+  {
+    if (step%2 == 0) // phase one: render half the char
+    {
+      display.drawChar(offset[0] + (i + separation) * charWidth, offset[1] + charWidth, word[i/2], BLACK, WHITE, 1); 
+      display.fillRect(offset[0] + (i + separation) * charWidth, offset[1] + 2 * charWidth, charWidth, charWidth * 2, WHITE);
+    } else { // phase two: render full char
+      display.drawChar(offset[0] + (i + separation) * charWidth, offset[1], word[i/2], BLACK, WHITE, 1); 
+    }
+  }*/
+  for (uint8_t i = 0; i < strlen(word); i++)
+  {
+    display.drawChar(offset[0] + (i + separation) * charWidth, offset[1], word[i], BLACK, WHITE, 1); 
+  }
+}
+
 // options
 // kinda need to move this to define or const
 const uint8_t winX = 16;

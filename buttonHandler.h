@@ -1,13 +1,13 @@
 #include <Button.h>
 
 Button volUp(4); // Volume Up Button
-Button volDn(4); // Volume Down Button
-Button prev(4);  // Previous track Button
-Button next(4);  // Next track Button
+Button volDn(5); // Volume Down Button
+Button prev(6);  // Previous track Button
+Button next(7);  // Next track Button
 
-Button play(4); // Play Button
-Button mode(4); // Switch play mode Button
-Button disp(4); // Display Button
+Button play(8); // Play Button
+Button mode(9); // Switch play mode Button
+Button disp(10); // Display Button
 
 typedef enum Buttons
 {
