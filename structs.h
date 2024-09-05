@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+enum PlayMode {Shuffle, LoopFolder, Loop1};
+
 struct MusicState
 {                  // A struct defining current state of playing track
   char *trackName; // Name of the track currently playing (if not working try [])
@@ -24,6 +26,25 @@ struct AnimSeq
     int16_t offset[2];                            // Should be used to offset drawing current animation if whole object moves 
 };
 
-enum PlayMode {Shuffle, LoopFolder, Loop1};
+
+struct Point
+{ // point in 2D space
+  int16_t x;
+  int16_t y;
+};
+
+struct WheelAnim
+{ // Animation steps for revolver cylinder menu
+  // Every elemnt is counted from left to right
+  Point *hole1[9];
+  Point *hole2[9];
+  Point *hole3[9];
+  Point *hole4[9];
+  Point *hole5[9];
+  Point *edge1[9];
+  Point *edge2[9];
+  Point *edge3[9];
+  Point *edge4[9];
+};
 
 #endif

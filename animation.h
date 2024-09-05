@@ -10,7 +10,6 @@
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Defenitions
-
 int16_t globalOffset[2] = {0, 0};
 struct AnimSeq *AnimQueue[4];
 
@@ -143,6 +142,20 @@ void drawMenuCorner(char *text)
   display.print(text);
   display.setRotation(0);
 }
+// very debug, maybe not so sure
+void drawMediaBar(int16_t offset[2], struct MusicState *stat)
+{
+  display.fillRect(0, 0, 128, 32, WHITE);
+  drawTrackName(stat->trackName, offset);
+  drawPlaybackState(stat->PlayState, offset);
+
+  drawTrackTime(stat->timer, offset);
+
+  drawVolume(stat->volume, offset);
+  drawBattery(stat->battery, offset);
+
+  drawPlayMode(stat->playMode, offset);
+}
 
 void drawTrackName(char *text, int16_t offset[2])
 {
@@ -151,7 +164,7 @@ void drawTrackName(char *text, int16_t offset[2])
   display.write(text);
 }
 
-void drawPlaybackState(uint8_t state, int16_t offset[2])
+void drawPlaybackState(byte state, int16_t offset[2])
 {
   // lets say
   // 3 - Play (there's weird bug that starts with introducing a MusicState struct.
@@ -247,6 +260,7 @@ void drawPlayMode(PlayMode mode, int16_t offset[2])
 {
   const int16_t start_x = 128 - 21 - 16;
   const int16_t start_y = 2;
+  // display.fillRect(start_x + offset[0], start_y + offset[1], 14, 11, WHITE);
   switch (mode)
   {
   case LoopFolder:
@@ -254,12 +268,12 @@ void drawPlayMode(PlayMode mode, int16_t offset[2])
     break;
 
   case Loop1:
-    display.drawBitmap(start_x + offset[0], start_y + offset[1], bitmap_icon_loop, 14, 11, BLACK);
-    display.drawBitmap(start_x + 5 + offset[0], start_y + 2 + offset[1], bitmap_icon_loop1, 3, 6, BLACK);
+    display.drawBitmap(start_x + offset[0], start_y + offset[1], bitmap_icon_loop, 14, 11, WHITE);
+    display.drawBitmap(start_x + 5, start_y + 2, bitmap_icon_loop1, 3, 6, BLACK);
     break;
 
   case Shuffle:
-    display.drawBitmap(start_x + offset[0], start_y + offset[1], bitmap_icon_shuffle, 14, 11, BLACK);
+    display.drawBitmap(start_x + offset[0], start_y + offset[1], bitmap_icon_shuffle, 14, 11, WHITE);
     break;
 
   default:
@@ -268,25 +282,70 @@ void drawPlayMode(PlayMode mode, int16_t offset[2])
   }
 }
 
-// very debug, maybe not so sure
-void drawMediaBar(int16_t offset[2], struct MusicState *stat)
+// todo: move to the seperate category/file/folder/whatever
+Point hole1[9] = {{}, {}, {}, {}, {}, {}, {}, {}, {}};
+Point hole2[9] = {{}, {}, {}, {}, {-20, 12}, {}, {}, {}, {}};
+Point hole3[9] = {{}, {}, {}, {}, {0, 23}, {}, {}, {}, {}};
+Point hole4[9] = {{23, 0}, {23, 3}, {22, 6}, {21, 9}, {20, 12}, {}, {}, {}, {}};
+Point hole5[9] = {{}, {}, {}, {}, {}, {}, {}, {}, {}};
+Point edge1[9] = {{}, {}, {}, {}, {}, {}, {}, {}, {}};
+Point edge2[9] = {{}, {}, {}, {}, {23, 40}, {}, {}, {}, {}};
+Point edge3[9] = {{}, {}, {}, {}, {-23, 40}, {}, {}, {}, {}};
+Point edge4[9] = {{}, {}, {}, {}, {}, {}, {}, {}, {}};
+Point *h1 = &hole1[5];
+Point *h2 = &hole2[5];
+Point *h3 = &hole3[5];
+Point *h4 = &hole4[5];
+Point *h5 = &hole5[5];
+Point *e1 = &edge1[5];
+Point *e2 = &edge2[5];
+Point *e3 = &edge3[5];
+Point *e4 = &edge4[5];
+WheelAnim wheelAnim = {h1, h2, h3, h4, h5, e1, e2, e3, e4};
+
+void drawWheel(uint8_t step, int16_t offset[2]) // default offset (centered) is x: 64, y: -9
 {
-  display.fillRect(0, 0, 128, 32, WHITE);
-  drawTrackName(stat->trackName, offset);
-  drawPlaybackState(stat->PlayState, offset);
-
-  drawTrackTime(stat->timer, offset);
-
-  drawVolume(stat->volume, offset);
-  drawBattery(stat->battery, offset);
-
-  drawPlayMode(stat->playMode, offset);
+  if (step >= 5 or step <= -5) 
+  {
+    step = 0;
+  }
+  display.fillCircle(64 + offset[0], -9 + offset[1], 36, BLACK); // Base cylinder
+  display.fillCircle(wheelAnim.hole4[step]->x, wheelAnim.hole4[step]->y, 9, WHITE); // Hole 4
+  display.fillCircle(wheelAnim.hole3[step]->x, wheelAnim.hole3[step]->y, 9, WHITE); // Hole 3
+  display.fillCircle(wheelAnim.hole2[step]->x, wheelAnim.hole2[step]->y, 9, WHITE); // Hole 2
+  display.fillCircle(wheelAnim.edge2[step]->x, wheelAnim.edge2[step]->y, 14, WHITE); // Edge 2
+  display.fillCircle(wheelAnim.edge3[step]->x, wheelAnim.edge3[step]->y, 14, WHITE); // Edge 3
+  if (step != 0)
+  {
+    display.fillCircle(wheelAnim.hole1[step]->x, wheelAnim.hole1[step]->y, 9, WHITE); // Hole 1
+    display.fillCircle(wheelAnim.hole5[step]->x, wheelAnim.hole5[step]->y, 9, WHITE); // Hole 5
+    display.fillCircle(wheelAnim.edge1[step]->x, wheelAnim.edge1[step]->y, 14, WHITE); // Edge 1
+    display.fillCircle(wheelAnim.edge4[step]->x, wheelAnim.edge4[step]->y, 14, WHITE); // Edge 4
+  }
 }
 
 // Animation internal functions
 
-// Render function for Menu Corner sliding across the screen on menu open @note WARNING: Unstable. Can cause crashes of whole display. That was when I did full refresh, but now circles still might be too much for arduino to handle (looks cooler and P3 like though)
-void renderAnim_MenuCornerSlide(struct AnimSeq *self)
+void renderAnim_wheelRotationLeft(struct AnimSeq *self) // idk if it's left btw
+{
+ 
+  uint8_t travel = 4; // in frames (actual animation, 30 FPS)
+
+  if (self->step > self->duration)
+  {
+    PopAnim();
+    return;
+  }
+
+  int8_t frameStep = map(self->step, 0, self->duration, 0, travel);
+  drawWheel(frameStep, self->offset);
+  self->step++;
+
+}
+
+// Render function for bubbles or circles sliding across the screen on media bar closing
+// @note  WARNING: Unstable. Can cause crashes of whole display. That was when I did full refresh, but now circles still might be too much for arduino to handle (looks cooler and P3 like though)
+void renderAnim_BarBubbleTransition(struct AnimSeq *self)
 {
   uint8_t travel = 152; // in pixels
 
@@ -303,15 +362,16 @@ void renderAnim_MenuCornerSlide(struct AnimSeq *self)
   }
 
   self->offset[1] = map(self->step, 0, self->duration, 12, travel);
-  display.fillRect(0, 0, 128, 32, WHITE);
   if (self->offset[1] <= 112)
   {
     display.drawCircle(112, 0, self->offset[1] + 1, BLACK);
     display.drawCircle(112, 0, self->offset[1], BLACK);
+    display.fillCircle(112, 0, self->offset[1] - 1, WHITE);
   }
   if (self->step > self->duration / 4)
   {
     display.drawCircle(32, 0, self->offset[1] - 50, BLACK);
+    display.fillCircle(32, 0, self->offset[1] - 51, WHITE);
   }
   self->step++;
 }
@@ -397,9 +457,8 @@ void renderAnim_SwipeUpMenu(struct AnimSeq *self)
   self->step++;
 }
 
-/*
 void renderAnim_OpenMenuOption(struct AnimSeq *self) {
-  uint8_t travel = 32; //in pixels
+  uint8_t travel = 11; //in pixels
 
   if (self->step > self->duration) {
     PopAnim();
@@ -408,9 +467,8 @@ void renderAnim_OpenMenuOption(struct AnimSeq *self) {
 
   self->offset[1] = map(self->step, 0, self->duration, 0, travel);
 
-
   self->step++;
-}*/
+}
 
 // Render function for swiping out the current song
 void renderAnim_SwipeOutSong(struct AnimSeq *self)
@@ -446,19 +504,20 @@ void renderAnim_SwipeInSong(struct AnimSeq *self)
 
 // animation methods
 
-/* Only started
-void Anim_OpenMenuOption() {
+void Anim_wheelRotation()
+{
   uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 10;
+  uint8_t duration = 8;
   uint8_t i = getFirstEmptyAnim();
-  if (i < 4) {
-    AnimQueue[i]->renderFunc = &renderAnim_OpenMenuOption;
+  if (i < 4)
+  {
+    AnimQueue[i]->renderFunc = &renderAnim_wheelRotationLeft;
     AnimQueue[i]->step = 0;
     AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
+    AnimQueue[i]->offset[0] = 64;
+    AnimQueue[i]->offset[1] = -9;
   }
-}*/
+}
 
 void Anim_SwipeUpMenu()
 {
@@ -490,15 +549,15 @@ void Anim_SwipeDownMenu()
   }
 }
 
-// Function that initiates the animation for Menu Corner sliding across the screen on menu open
-void Anim_MenuCornerSlide()
+// Function that initiates the animation for bubbles or circles sliding across the screen on media bar close
+void Anim_BarBubbleTransition()
 {
   uint8_t multiplier = 60 / FPS;
   uint8_t duration = 16;
   uint8_t i = getFirstEmptyAnim();
   if (i < 4)
   {
-    AnimQueue[i]->renderFunc = &renderAnim_MenuCornerSlide;
+    AnimQueue[i]->renderFunc = &renderAnim_BarBubbleTransition;
     AnimQueue[i]->step = 0;
     AnimQueue[i]->duration = duration / multiplier;
     AnimQueue[i]->offset[0] = 0;
@@ -535,6 +594,21 @@ void Anim_SwipeInSong()
     AnimQueue[i]->duration = duration / multiplier;
     AnimQueue[i]->offset[0] = 0;
     AnimQueue[i]->offset[1] = -32;
+  }
+}
+
+void Anim_OpenMenuOption()
+{
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 10;
+  uint8_t i = getFirstEmptyAnim();
+  if (i < 4)
+  {
+    AnimQueue[i]->renderFunc = &renderAnim_OpenMenuOption;
+    AnimQueue[i]->step = 0;
+    AnimQueue[i]->duration = duration / multiplier;
+    AnimQueue[i]->offset[0] = 0;
+    AnimQueue[i]->offset[1] = 0;
   }
 }
 
