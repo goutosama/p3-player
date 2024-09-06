@@ -27,8 +27,8 @@ parts = 3
 
 startPos = Point(0, 0)
 
-point = Point(20,12)
-rotation = [60, 90]
+point = Point(23, 40)
+rotation = [60, 115]
 print("Point", point.x - startPos.x, point.y - startPos.y, "Rotation from", rotation[0], "to", rotation[1])
 degStep = (rotation[1]-rotation[0])/(parts + 1)
 print(degStep)
