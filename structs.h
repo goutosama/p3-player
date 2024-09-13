@@ -36,15 +36,15 @@ struct Point
 struct WheelAnim
 { // Animation steps for revolver cylinder menu
   // Every elemnt is counted from left to right
-  Point *hole1[9];
-  Point *hole2[9];
-  Point *hole3[9];
-  Point *hole4[9];
-  Point *hole5[9];
-  Point *edge1[9];
-  Point *edge2[9];
-  Point *edge3[9];
-  Point *edge4[9];
+  Point* hole1;
+  Point* hole2;
+  Point* hole3;
+  Point* hole4;
+  Point* hole5;
+  Point* edge1;
+  Point* edge2;
+  Point* edge3;
+  Point* edge4;
 };
 
 #endif

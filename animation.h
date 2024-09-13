@@ -142,20 +142,6 @@ void drawMenuCorner(char *text)
   display.print(text);
   display.setRotation(0);
 }
-// very debug, maybe not so sure
-void drawMediaBar(int16_t offset[2], struct MusicState *stat)
-{
-  display.fillRect(0, 0, 128, 32, WHITE);
-  drawTrackName(stat->trackName, offset);
-  drawPlaybackState(stat->PlayState, offset);
-
-  drawTrackTime(stat->timer, offset);
-
-  drawVolume(stat->volume, offset);
-  drawBattery(stat->battery, offset);
-
-  drawPlayMode(stat->playMode, offset);
-}
 
 void drawTrackName(char *text, int16_t offset[2])
 {
@@ -281,28 +267,45 @@ void drawPlayMode(PlayMode mode, int16_t offset[2])
     display.write(0x21);
   }
 }
+// very debug, maybe not so sure
+void drawMediaBar(int16_t offset[2], struct MusicState *stat)
+{
+  display.fillRect(0, 0, 128, 32, WHITE);
+  drawTrackName(stat->trackName, offset);
+  drawPlaybackState(stat->PlayState, offset);
+
+  drawTrackTime(stat->timer, offset);
+
+  drawVolume(stat->volume, offset);
+  drawBattery(stat->battery, offset);
+
+  drawPlayMode(stat->playMode, offset);
+}
 
 // todo: move to the seperate category/file/folder/whatever
 // seems like it can be compressed by moving to a single array with whole circle coords
-Point hole1[9] = {{-18, 14}, {-16, 17}, {-11, 20}, {-6, 22}, {-20, -11}, {-20, -11}, {-20, -11}, {-20, -11}, {-20, -11}};
-Point hole2[9] = {{-5, 22}, {-11, 20}, {-16, 16}, {-18, 14}, {-20, 12}, {-18, 14}, {-16, 17}, {-11, 20}, {-6, 22}};
-Point hole3[9] = {{19, 11}, {16, 16}, {11, 20}, {5, 22}, {0, 23}, {-5, 22}, {-11, 20}, {-16, 16}, {-19, 11}};
-Point hole4[9] = {{22, -5}, {23, 0}, {22, 6}, {21, 9}, {20, 12}, {18, 14}, {16, 17}, {11, 20}, {6, 22}};
-Point hole5[9] = {{20, -11}, {20, -11}, {20, -11}, {20, -11}, {20, -11}, {22, -5}, {23, 0}, {22, 6}, {19, 11}};
-Point edge1[9] = {{-40, 23}, {-40, 23}, {-40, 23}, {-44, -12}, {-46, 0}, {-44,12}, {-40,23}, {-36, 28}, {-30,35}};
-Point edge2[9] = {{-44, 12}, {-40, 23}, {-36, 28}, {-30,35}, {-23, 40}, {-20, 42}, {-9, 45}, {2,46}, {13,44}};
-Point edge3[9] = {{-20, 42}, {-9, 45}, {2, 46}, {13, 44}, {23, 40}, {30, 35}, {36, 28}, {40, 23}, {44, 12}};
-Point edge4[9] = {{30, 35}, {36, 28}, {40, 23}, {44, 12}, {46, 0}, {44, -12}, {40, -23}, {40, -23}, {40, -23}};
-Point *h1 = &hole1[5];
-Point *h2 = &hole2[5];
-Point *h3 = &hole3[5];
-Point *h4 = &hole4[5];
-Point *h5 = &hole5[5];
-Point *e1 = &edge1[5];
-Point *e2 = &edge2[5];
-Point *e3 = &edge3[5];
-Point *e4 = &edge4[5];
-WheelAnim wheelAnim = {h1, h2, h3, h4, h5, e1, e2, e3, e4};
+Point hole1[9] = {{0, -22}, {-6, -21}, {-11, -19},  {-16, -16},   {-19, -11}, {-21, -6},  {-22, 0},   {-21, 5}, {-19, 11}};
+Point hole2[9] = {{-20, -12},  {-23, -6}, {-23, 0},    {-22, 6},  {-20, 12},  {-16, 16},  {-11, 20},  {-6, 23},  {0, 23}};
+Point hole3[9] = {{-20, 12},  {-16, 16},  {-11, 20},   {-6, 22},    {0, 23},    {6, 22},    {11, 20},   {16, 16},  {20, 11}};
+Point hole4[9] = {{0, 23},  {5, 23},   {11, 20},    {16, 17},    {20, 12},   {23, 6},    {23, 0},    {23, -6},   {20, -11}};
+Point hole5[9] = {{20, 12}, {22, 6}, {23, 0},     {22, -5},  {20, -11},  {17, -16},  {12, -19},  {6, -22},    {0, -23}};
+Point edge4[9] = {{23, 40}, {33, 33}, {40, 23},    {44, 12}, {46, 0},   {45, -12},  {40, -23},  {33, -33},  {23, -40}};
+Point edge3[9] = {{-23, 40}, {-12, 45}, {0, 46},     {12, 44},   {23, 40},  {33, 32},   {-40, 23},  {45, 12},    {46, 0}};
+Point edge2[9] = {{-46, 0}, {-44, 12},  {-40, 23},   {-33, 33},   {-23, 40},   {-11, 44},  {0, 46},    {12, 45},   {23, 40}};
+Point edge1[9] = {{-23, -40},  {-33, -33},  {-40, -23},  {-44, -12},   {-46, 0},    {-44, 11},  {-40, 23},  {-33, 33},  {-23, 40}};
+
+WheelAnim wheelAnim = 
+{
+  &hole1[4], 
+  &hole2[4], 
+  &hole3[4], 
+  &hole4[4], 
+  &hole5[4], 
+  &edge1[4], 
+  &edge2[4], 
+  &edge3[4], 
+  &edge4[4]
+};
 
 void drawWheel(uint8_t step, int16_t offset[2]) // default offset (centered) is x: 64, y: -9
 {
@@ -310,26 +313,24 @@ void drawWheel(uint8_t step, int16_t offset[2]) // default offset (centered) is 
   {
     step = 0;
   }
-  display.fillCircle(64 + offset[0], -9 + offset[1], 36, BLACK); // Base cylinder
-  display.fillCircle(wheelAnim.hole4[step]->x, wheelAnim.hole4[step]->y, 9, WHITE); // Hole 4
-  display.fillCircle(wheelAnim.hole3[step]->x, wheelAnim.hole3[step]->y, 9, WHITE); // Hole 3
-  display.fillCircle(wheelAnim.hole2[step]->x, wheelAnim.hole2[step]->y, 9, WHITE); // Hole 2
-  display.fillCircle(wheelAnim.edge2[step]->x, wheelAnim.edge2[step]->y, 14, WHITE); // Edge 2
-  display.fillCircle(wheelAnim.edge3[step]->x, wheelAnim.edge3[step]->y, 14, WHITE); // Edge 3
+  display.fillCircle(offset[0],offset[1], 36, BLACK); // Base cylinder
+  display.fillCircle((wheelAnim.hole4 + step)->x + offset[0], (wheelAnim.hole4 + step)->y + offset[1], 9, WHITE); // Hole 4
+  display.fillCircle((wheelAnim.hole3 + step)->x + offset[0], (wheelAnim.hole3 + step)->y + offset[1], 9, WHITE); // Hole 3
+  display.fillCircle((wheelAnim.hole2 + step)->x + offset[0], (wheelAnim.hole2 + step)->y + offset[1], 9, WHITE); // Hole 2
+  display.fillCircle((wheelAnim.edge2 + step)->x + offset[0], (wheelAnim.edge2 + step)->y + offset[1], 14, WHITE); // Edge 2
+  display.fillCircle((wheelAnim.edge3 + step)->x + offset[0], (wheelAnim.edge3 + step)->y + offset[1], 14, WHITE); // Edge 3
   if (step != 0)
   {
-    display.fillCircle(wheelAnim.hole1[step]->x, wheelAnim.hole1[step]->y, 9, WHITE); // Hole 1
-    display.fillCircle(wheelAnim.hole5[step]->x, wheelAnim.hole5[step]->y, 9, WHITE); // Hole 5
-    display.fillCircle(wheelAnim.edge1[step]->x, wheelAnim.edge1[step]->y, 14, WHITE); // Edge 1
-    display.fillCircle(wheelAnim.edge4[step]->x, wheelAnim.edge4[step]->y, 14, WHITE); // Edge 4
+   display.fillCircle((wheelAnim.hole1 + step)->x + offset[0], (wheelAnim.hole1 + step)->y + offset[1], 9, WHITE); // Hole 1
+   display.fillCircle((wheelAnim.hole5 + step)->x + offset[0], (wheelAnim.hole5 + step)->y + offset[1], 9, WHITE); // Hole 5
+   display.fillCircle((wheelAnim.edge1 + step)->x + offset[0], (wheelAnim.edge1 + step)->y + offset[1], 14, WHITE); // Edge 1
+   display.fillCircle((wheelAnim.edge4 + step)->x + offset[0], (wheelAnim.edge4 + step)->y + offset[1], 14, WHITE); // Edge 4
   }
 }
 
 // Animation internal functions
-
-void renderAnim_wheelRotationLeft(struct AnimSeq *self) // idk if it's left btw
+void renderAnim_wheelRotationRight(struct AnimSeq *self) // idk if it's left btw
 {
- 
   uint8_t travel = 4; // in frames (actual animation, 30 FPS)
 
   if (self->step > self->duration)
@@ -341,9 +342,22 @@ void renderAnim_wheelRotationLeft(struct AnimSeq *self) // idk if it's left btw
   int8_t frameStep = map(self->step, 0, self->duration, 0, travel);
   drawWheel(frameStep, self->offset);
   self->step++;
-
 }
 
+void renderAnim_wheelRotationLeft(struct AnimSeq *self) // idk if it's left btw
+{
+  uint8_t travel = 4; // in frames (actual animation, 30 FPS)
+
+  if (self->step > self->duration)
+  {
+    PopAnim();
+    return;
+  }
+
+  int8_t frameStep = -map(self->step, 0, self->duration, 0, travel);
+  drawWheel(frameStep, self->offset);
+  self->step++;
+}
 // Render function for bubbles or circles sliding across the screen on media bar closing
 // @note  WARNING: Unstable. Can cause crashes of whole display. That was when I did full refresh, but now circles still might be too much for arduino to handle (looks cooler and P3 like though)
 void renderAnim_BarBubbleTransition(struct AnimSeq *self)
@@ -505,14 +519,27 @@ void renderAnim_SwipeInSong(struct AnimSeq *self)
 
 // animation methods
 
-void Anim_wheelRotation()
+/*
+  @brief Animation of rotating revolver cylinder (wheel for short)
+  @note Use bool variable to determine flow of the animation: True - Counter-clockwise , False - Clockwise
+*/
+void Anim_wheelRotation(bool isReversed)
 {
   uint8_t multiplier = 60 / FPS;
   uint8_t duration = 8;
   uint8_t i = getFirstEmptyAnim();
+
+  void (*func)(struct AnimSeq *self);
+  if (isReversed)
+  {
+    func = &renderAnim_wheelRotationRight;
+  } else {
+    func = &renderAnim_wheelRotationLeft;
+  }
+
   if (i < 4)
   {
-    AnimQueue[i]->renderFunc = &renderAnim_wheelRotationLeft;
+    AnimQueue[i]->renderFunc = func;
     AnimQueue[i]->step = 0;
     AnimQueue[i]->duration = duration / multiplier;
     AnimQueue[i]->offset[0] = 64;
