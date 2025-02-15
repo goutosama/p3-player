@@ -11,66 +11,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Defenitions
 int16_t globalOffset[2] = {0, 0};
-struct AnimSeq *AnimQueue[4];
-
-/*!
-    @brief  Function that returns 0 when there's no animations in the queue and 1 elsewhere
-    @return Returns bool value
-            0 - no animations in the queue
-            1 - at least one animation is in the queue
-*/
-bool isEmpty()
-{
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    if (AnimQueue[i]->renderFunc != NULL)
-    {
-      return false;
-    }
-  }
-  return true;
-}
-
-/*!
-    @brief  Function that returns first empty animation ready to be overwritten
-    @return Returns uint8 number with an index of animation between 0 and 3, and 4 if whole queue is full
-*/
-uint8_t getFirstEmptyAnim()
-{
-  // 4 means AnimQueue is full
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    if (AnimQueue[i]->renderFunc == NULL)
-    {
-      return i;
-    }
-  }
-  return 4;
-}
-
-/*!
-    @brief  This function *deletes* every animation in the queue that is already finished
-*/
-void PopAnim()
-{
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    if (AnimQueue[i]->duration < AnimQueue[i]->step)
-    {
-      AnimQueue[i]->renderFunc = NULL;
-    }
-  }
-}
+AnimQueue animQueue = AnimQueue();
 
 void initAnimations()
 {
-  // Creates Animation Queue. Length is defined in defines.h
-  for (uint8_t i = 0; i < ANIM_QUEUE_LENGTH; i++)
-  {
-    AnimQueue[i] = (struct AnimSeq *)malloc(sizeof(struct AnimSeq));
-    AnimQueue[i]->renderFunc = NULL;
-  }
-
   // Default Adafruit code to check connection with display
   // SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
@@ -92,44 +36,42 @@ void initAnimations()
 
 // options
 // kinda need to move this to define or const
-const uint8_t winX = 16;
-const uint8_t winY = 10;
-const uint8_t winWidth = 96;
-const uint8_t winHeight = 11;
+const Point winPos{16,10};
+const Point winSize{96, 11};
 
 void drawCenterOption(char *text, int16_t offset[2], bool isFullOffset)
 {
   // center option
-  int8_t offX = winX;
-  int8_t offY = winY;
+  int8_t offX = winPos.x;
+  int8_t offY = winPos.y;
   display.setTextColor(WHITE);
   if (isFullOffset)
   {
     offX += offset[0];
     offY += offset[1];
   }
-  display.fillRect(offX, offY, winWidth, winHeight, BLACK);
-  display.setCursor(winX + 2 + offset[0], winY + 2 + offset[1]);
+  display.fillRect(offX, offY, winSize.x,winSize.y, BLACK);
+  display.setCursor(winPos.x + 2 + offset[0], winPos.y + 2 + offset[1]);
   display.print(text);
 }
 
 void drawUpperOption(char *text, int16_t offset[2])
 {
   display.setTextColor(BLACK);
-  display.setCursor(winX, winY - 8);
+  display.setCursor(winPos.x, winPos.y - 8);
   display.print((char)0x1E);
   display.print(" ");
-  display.setCursor(winX + offset[0] + 2 * 6, winY - 8 + offset[1]);
+  display.setCursor(winPos.x + offset[0] + 2 * 6, winPos.y - 8 + offset[1]);
   display.print(text);
 }
 
 void drawLowerOption(char *text, int16_t offset[2])
 {
   display.setTextColor(BLACK);
-  display.setCursor(winX, winY + 12);
+  display.setCursor(winPos.x, winPos.y + 12);
   display.print((char)0x1F);
   display.print(" ");
-  display.setCursor(winX + offset[0] + 2 * 6, winY + 12 + offset[1]);
+  display.setCursor(winPos.x + offset[0] + 2 * 6, winPos.y + 12 + offset[1]);
   display.print(text);
 }
 
@@ -284,47 +226,46 @@ void drawMediaBar(int16_t offset[2], struct MusicState *stat)
 
 // todo: move to the seperate category/file/folder/whatever
 // seems like it can be compressed by moving to a single array with whole circle coords
-Point hole1[9] = {{0, -22}, {-6, -21}, {-11, -19},  {-16, -16},   {-19, -11}, {-21, -6},  {-22, 0},   {-21, 5}, {-19, 11}};
-Point hole2[9] = {{-20, -12},  {-23, -6}, {-23, 0},    {-22, 6},  {-20, 12},  {-16, 16},  {-11, 20},  {-6, 23},  {0, 23}};
-Point hole3[9] = {{-20, 12},  {-16, 16},  {-11, 20},   {-6, 22},    {0, 23},    {6, 22},    {11, 20},   {16, 16},  {20, 11}};
-Point hole4[9] = {{0, 23},  {5, 23},   {11, 20},    {16, 17},    {20, 12},   {23, 6},    {23, 0},    {23, -6},   {20, -11}};
-Point hole5[9] = {{20, 12}, {22, 6}, {23, 0},     {22, -5},  {20, -11},  {17, -16},  {12, -19},  {6, -22},    {0, -23}};
-Point edge4[9] = {{23, 40}, {33, 33}, {40, 23},    {44, 12}, {46, 0},   {45, -12},  {40, -23},  {33, -33},  {23, -40}};
-Point edge3[9] = {{-23, 40}, {-12, 45}, {0, 46},     {12, 44},   {23, 40},  {33, 32},   {-40, 23},  {45, 12},    {46, 0}};
-Point edge2[9] = {{-46, 0}, {-44, 12},  {-40, 23},   {-33, 33},   {-23, 40},   {-11, 44},  {0, 46},    {12, 45},   {23, 40}};
-Point edge1[9] = {{-23, -40},  {-33, -33},  {-40, -23},  {-44, -12},   {-46, 0},    {-44, 11},  {-40, 23},  {-33, 33},  {-23, 40}};
+Point hole1[9] = {{0, -22}, {-6, -21}, {-11, -19}, {-16, -16}, {-19, -11}, {-21, -6}, {-22, 0}, {-21, 5}, {-19, 11}};
+Point hole2[9] = {{-20, -12}, {-23, -6}, {-23, 0}, {-22, 6}, {-20, 12}, {-16, 16}, {-11, 20}, {-6, 23}, {0, 23}};
+Point hole3[9] = {{-20, 12}, {-16, 16}, {-11, 20}, {-6, 22}, {0, 23}, {6, 22}, {11, 20}, {16, 16}, {20, 11}};
+Point hole4[9] = {{0, 23}, {5, 23}, {11, 20}, {16, 17}, {20, 12}, {23, 6}, {23, 0}, {23, -6}, {20, -11}};
+Point hole5[9] = {{20, 12}, {22, 6}, {23, 0}, {22, -5}, {20, -11}, {17, -16}, {12, -19}, {6, -22}, {0, -23}};
+Point edge4[9] = {{23, 40}, {33, 33}, {40, 23}, {44, 12}, {46, 0}, {45, -12}, {40, -23}, {33, -33}, {23, -40}};
+Point edge3[9] = {{-23, 40}, {-12, 45}, {0, 46}, {12, 44}, {23, 40}, {33, 32}, {-40, 23}, {45, 12}, {46, 0}};
+Point edge2[9] = {{-46, 0}, {-44, 12}, {-40, 23}, {-33, 33}, {-23, 40}, {-11, 44}, {0, 46}, {12, 45}, {23, 40}};
+Point edge1[9] = {{-23, -40}, {-33, -33}, {-40, -23}, {-44, -12}, {-46, 0}, {-44, 11}, {-40, 23}, {-33, 33}, {-23, 40}};
 
-WheelAnim wheelAnim = 
-{
-  &hole1[4], 
-  &hole2[4], 
-  &hole3[4], 
-  &hole4[4], 
-  &hole5[4], 
-  &edge1[4], 
-  &edge2[4], 
-  &edge3[4], 
-  &edge4[4]
-};
+WheelAnim wheelAnim =
+    {
+        &hole1[4],
+        &hole2[4],
+        &hole3[4],
+        &hole4[4],
+        &hole5[4],
+        &edge1[4],
+        &edge2[4],
+        &edge3[4],
+        &edge4[4]};
 
 void drawWheel(uint8_t step, int16_t offset[2]) // default offset (centered) is x: 64, y: -9
 {
-  if (step >= 5 or step <= -5) 
+  if (step >= 5 or step <= -5)
   {
     step = 0;
   }
-  display.fillCircle(offset[0],offset[1], 36, BLACK); // Base cylinder
-  display.fillCircle((wheelAnim.hole4 + step)->x + offset[0], (wheelAnim.hole4 + step)->y + offset[1], 9, WHITE); // Hole 4
-  display.fillCircle((wheelAnim.hole3 + step)->x + offset[0], (wheelAnim.hole3 + step)->y + offset[1], 9, WHITE); // Hole 3
-  display.fillCircle((wheelAnim.hole2 + step)->x + offset[0], (wheelAnim.hole2 + step)->y + offset[1], 9, WHITE); // Hole 2
+  display.fillCircle(offset[0], offset[1], 36, BLACK);                                                             // Base cylinder
+  display.fillCircle((wheelAnim.hole4 + step)->x + offset[0], (wheelAnim.hole4 + step)->y + offset[1], 9, WHITE);  // Hole 4
+  display.fillCircle((wheelAnim.hole3 + step)->x + offset[0], (wheelAnim.hole3 + step)->y + offset[1], 9, WHITE);  // Hole 3
+  display.fillCircle((wheelAnim.hole2 + step)->x + offset[0], (wheelAnim.hole2 + step)->y + offset[1], 9, WHITE);  // Hole 2
   display.fillCircle((wheelAnim.edge2 + step)->x + offset[0], (wheelAnim.edge2 + step)->y + offset[1], 14, WHITE); // Edge 2
   display.fillCircle((wheelAnim.edge3 + step)->x + offset[0], (wheelAnim.edge3 + step)->y + offset[1], 14, WHITE); // Edge 3
   if (step != 0)
   {
-   display.fillCircle((wheelAnim.hole1 + step)->x + offset[0], (wheelAnim.hole1 + step)->y + offset[1], 9, WHITE); // Hole 1
-   display.fillCircle((wheelAnim.hole5 + step)->x + offset[0], (wheelAnim.hole5 + step)->y + offset[1], 9, WHITE); // Hole 5
-   display.fillCircle((wheelAnim.edge1 + step)->x + offset[0], (wheelAnim.edge1 + step)->y + offset[1], 14, WHITE); // Edge 1
-   display.fillCircle((wheelAnim.edge4 + step)->x + offset[0], (wheelAnim.edge4 + step)->y + offset[1], 14, WHITE); // Edge 4
+    display.fillCircle((wheelAnim.hole1 + step)->x + offset[0], (wheelAnim.hole1 + step)->y + offset[1], 9, WHITE);  // Hole 1
+    display.fillCircle((wheelAnim.hole5 + step)->x + offset[0], (wheelAnim.hole5 + step)->y + offset[1], 9, WHITE);  // Hole 5
+    display.fillCircle((wheelAnim.edge1 + step)->x + offset[0], (wheelAnim.edge1 + step)->y + offset[1], 14, WHITE); // Edge 1
+    display.fillCircle((wheelAnim.edge4 + step)->x + offset[0], (wheelAnim.edge4 + step)->y + offset[1], 14, WHITE); // Edge 4
   }
 }
 
@@ -335,7 +276,7 @@ void renderAnim_wheelRotationRight(struct AnimSeq *self) // idk if it's left btw
 
   if (self->step > self->duration)
   {
-    PopAnim();
+    animQueue.PopAnim();
     return;
   }
 
@@ -350,7 +291,7 @@ void renderAnim_wheelRotationLeft(struct AnimSeq *self) // idk if it's left btw
 
   if (self->step > self->duration)
   {
-    PopAnim();
+    animQueue.PopAnim();
     return;
   }
 
@@ -372,7 +313,7 @@ void renderAnim_BarBubbleTransition(struct AnimSeq *self)
     drawUpperOption("First", self->offset);
     drawCenterOption("Second", self->offset, false);
     drawLowerOption("Third", self->offset);
-    PopAnim();
+    animQueue.PopAnim();
     return;
   }
 
@@ -399,7 +340,7 @@ void renderAnim_SwipeDownMenu(struct AnimSeq *self)
 
   if (self->step > self->duration)
   {
-    PopAnim();
+    animQueue.PopAnim();
     return;
   }
 
@@ -440,7 +381,7 @@ void renderAnim_SwipeUpMenu(struct AnimSeq *self)
 
   if (self->step > self->duration)
   {
-    PopAnim();
+    animQueue.PopAnim();
     return;
   }
 
@@ -472,11 +413,13 @@ void renderAnim_SwipeUpMenu(struct AnimSeq *self)
   self->step++;
 }
 
-void renderAnim_OpenMenuOption(struct AnimSeq *self) {
-  uint8_t travel = 11; //in pixels
+void renderAnim_OpenMenuOption(struct AnimSeq *self)
+{
+  uint8_t travel = 11; // in pixels
 
-  if (self->step > self->duration) {
-    PopAnim();
+  if (self->step > self->duration)
+  {
+    animQueue.PopAnim();
     return;
   }
 
@@ -492,7 +435,7 @@ void renderAnim_SwipeOutSong(struct AnimSeq *self)
 
   if (self->step > self->duration)
   {
-    PopAnim();
+   animQueue.PopAnim();
     return;
   }
 
@@ -508,7 +451,7 @@ void renderAnim_SwipeInSong(struct AnimSeq *self)
 
   if (self->step > self->duration)
   {
-    PopAnim();
+   animQueue.PopAnim();
     return;
   }
 
@@ -517,7 +460,22 @@ void renderAnim_SwipeInSong(struct AnimSeq *self)
   self->step++;
 }
 
-// animation methods
+// animation objects
+//these two are in old format cuz idk what to do with them yet
+void Anim_WheelSlideIn(bool isReversed)
+{
+  uint8_t multiplier = 60 / FPS;
+  uint8_t duration = 8;
+  uint8_t i = animQueue.getFirstEmptyAnim();
+  if (i < 4)
+  {
+    animQueue.slots[i].renderFunc = &renderAnim_wheelRotationLeft; // The slide in animation left? or right?
+    animQueue.slots[i].step = 0;
+    animQueue.slots[i].duration = duration / multiplier;
+    animQueue.slots[i].offset[0] = 64;
+    animQueue.slots[i].offset[1] = -9;
+  }
+}
 
 /*
   @brief Animation of rotating revolver cylinder (wheel for short)
@@ -527,116 +485,55 @@ void Anim_wheelRotation(bool isReversed)
 {
   uint8_t multiplier = 60 / FPS;
   uint8_t duration = 8;
-  uint8_t i = getFirstEmptyAnim();
+  uint8_t i = animQueue.getFirstEmptyAnim();
 
   void (*func)(struct AnimSeq *self);
   if (isReversed)
   {
     func = &renderAnim_wheelRotationRight;
-  } else {
+  }
+  else
+  {
     func = &renderAnim_wheelRotationLeft;
   }
 
   if (i < 4)
   {
-    AnimQueue[i]->renderFunc = func;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 64;
-    AnimQueue[i]->offset[1] = -9;
+    animQueue.slots[i].renderFunc = func;
+    animQueue.slots[i].step = 0;
+    animQueue.slots[i].duration = duration / multiplier;
+    animQueue.slots[i].offset[0] = 64;
+    animQueue.slots[i].offset[1] = -9;
   }
 }
 
-void Anim_SwipeUpMenu()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 10;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &renderAnim_SwipeUpMenu;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
-  }
-}
+Animation Anim_SwipeUpMenu = Animation(animQueue, uint16_t(10), &renderAnim_SwipeUpMenu, (int16_t[2]){0,0});
 
-void Anim_SwipeDownMenu()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 10;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &renderAnim_SwipeDownMenu;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
-  }
-}
+Animation Anim_SwipeDownMenu = Animation(animQueue, uint16_t(10), &renderAnim_SwipeDownMenu, (int16_t[2]){0,0});
 
 // Function that initiates the animation for bubbles or circles sliding across the screen on media bar close
-void Anim_BarBubbleTransition()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 16;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &renderAnim_BarBubbleTransition;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
-  }
-}
+Animation Anim_BarBubbleTransition = Animation(animQueue, uint16_t(16), &renderAnim_BarBubbleTransition, (int16_t[2]){0,0});
 
 // Function that initiates the animation for swiping out the current song
-void Anim_SwipeOutSong()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 12;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &renderAnim_SwipeOutSong;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
-  }
-}
+Animation Anim_SwipeOutSong = Animation(animQueue, uint16_t(12), &renderAnim_SwipeOutSong, (int16_t[2]){0,0});
 
 // Function that initiates the animation for swiping in the next song
-void Anim_SwipeInSong()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 12;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &renderAnim_SwipeInSong;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = -32;
-  }
-}
+Animation Anim_SwipeInSong = Animation(animQueue, uint16_t(12), &renderAnim_SwipeInSong, (int16_t[2]){0,-32});
 
-void Anim_OpenMenuOption()
+Animation Anim_OpenMenuOption = Animation(animQueue, uint16_t(10), &renderAnim_OpenMenuOption, (int16_t[2]){0,0});
+
+void funcAnim_Trans_MediaBarToHome(struct AnimSeq *self)
 {
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 10;
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
+  self->step++;
+  if (self->step > self->duration)
   {
-    AnimQueue[i]->renderFunc = &renderAnim_OpenMenuOption;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
+    Anim_WheelSlideIn(false); // still an object TODO
+    animQueue.PopAnim();
+    return;
+  }
+  if (self->step == 1)
+  {
+    Anim_BarBubbleTransition.start();
   }
 }
 
@@ -649,8 +546,8 @@ void funcAnim_SwitchSongs(struct AnimSeq *self)
   self->step++;
   if (self->step > self->duration)
   {
-    Anim_SwipeInSong();
-    PopAnim();
+   Anim_SwipeInSong.start();
+   animQueue.PopAnim();
     return;
   }
   /*
@@ -660,22 +557,9 @@ void funcAnim_SwitchSongs(struct AnimSeq *self)
   */
   if (self->step == 1)
   {
-    Anim_SwipeOutSong();
+    Anim_SwipeOutSong.start();
   }
 }
 
 // Function that initiates the animation which launches animation to switch songs in and out.
-void Anim_SwitchSongs()
-{
-  uint8_t multiplier = 60 / FPS;
-  uint8_t duration = 12 + 6; // durations of SwipeIn and SwipeOut + delay
-  uint8_t i = getFirstEmptyAnim();
-  if (i < 4)
-  {
-    AnimQueue[i]->renderFunc = &funcAnim_SwitchSongs;
-    AnimQueue[i]->step = 0;
-    AnimQueue[i]->duration = duration / multiplier;
-    AnimQueue[i]->offset[0] = 0;
-    AnimQueue[i]->offset[1] = 0;
-  }
-}
+const Animation Anim_SwitchSongs = Animation(animQueue, uint16_t(12 + 6), &funcAnim_SwitchSongs, (int16_t[2]){0,0});
