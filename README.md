@@ -1,3 +1,5 @@
+#### The project is far from completion, but is also frozen for now
+
 ### An Arduino project to make a recreation of MP3 player which is used by Persona 3 protagonist
 
 This project uses:
